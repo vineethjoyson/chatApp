@@ -2,10 +2,13 @@ import { useState, useRef } from "react";
 import allinLogoStark from "../assets/allin-logo-stark.svg";
 import { checkValidateData } from "../utils/validate";
 import { setTokenCookie } from "../utils/cookieUpdate";
-import { registerUser, loginUser } from "../utils/httpCalls";
+import { registerUser, loginUser, fetchProfileData } from "../utils/httpCalls";
+import { useModalStore } from "../store/useModalStore";
 const Login = ({ onClose }) => {
   const [isSignIn, setIsSignedIn] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+  const showLoading = useModalStore((state) => state.setProfileDataLoading);
+  const setProfiledata = useModalStore((state) => state.setProfileData);
   //   const registerUser = useModalStore((state) => state.registerUser);
   //   const loginUser = useModalStore((state) => state.loginUser);
   //   const profileResponse = useModalStore((state) => state.profileResponse);
@@ -28,11 +31,14 @@ const Login = ({ onClose }) => {
       let result;
       setErrorMessage(null);
       if (!isSignIn) {
-        result = await registerUser({
-          username: name,
-          password: password,
-          emailId: email,
-        });
+        let options = {
+          emailId: email?.current?.value,
+          password: password.current.value,
+          username: name?.current?.value,
+        };
+        console.log(options);
+        result = await registerUser(options);
+        console.log(result);
       } else {
         console.log("password", password.current.value);
         console.log("password", email?.current?.value);
@@ -44,9 +50,17 @@ const Login = ({ onClose }) => {
         result = await loginUser(options);
         console.log(result);
       }
-      if (result && result.ok && result.data && result.data.token) {
+      if (result && result.ok && result.data) {
         // Store token in cookie (expires in 7 days, secure if on HTTPS)
         setTokenCookie(result.data.token); // stores token for 7 days by default
+        showLoading();
+        onClose();
+        const profileData = await fetchProfileData({
+          emailId: email?.current?.value,
+        });
+        console.log("profileData>>>>", profileData.data);
+        setProfiledata(profileData);
+        showLoading();
       } else if (result && !result.ok) {
         setErrorMessage(
           result.data?.message ||
