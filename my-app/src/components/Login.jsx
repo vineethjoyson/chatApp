@@ -9,9 +9,7 @@ const Login = ({ onClose }) => {
   const [errorMessage, setErrorMessage] = useState(null);
   const showLoading = useModalStore((state) => state.setProfileDataLoading);
   const setProfiledata = useModalStore((state) => state.setProfileData);
-  //   const registerUser = useModalStore((state) => state.registerUser);
-  //   const loginUser = useModalStore((state) => state.loginUser);
-  //   const profileResponse = useModalStore((state) => state.profileResponse);
+
   const email = useRef(null);
   const password = useRef(null);
   const name = useRef(null);
@@ -53,6 +51,8 @@ const Login = ({ onClose }) => {
       if (result && result.ok && result.data) {
         // Store token in cookie (expires in 7 days, secure if on HTTPS)
         setTokenCookie(result.data.token); // stores token for 7 days by default
+        // Store emailId in localStorage for session restore
+        localStorage.setItem("emailId", email?.current?.value);
         showLoading();
         onClose();
         const profileData = await fetchProfileData({
